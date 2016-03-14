@@ -12,6 +12,7 @@ module.exports = function(grunt) {
       dist: {
         src: [
           'app/scripts/controllers/url.picker.controller.js',
+          'app/scripts/controllers/url.picker.grid.controller.js',
           'app/scripts/controllers/default.type.js'
         ],
         dest: '<%= basePath %>/js/url.picker.js',
@@ -48,7 +49,7 @@ module.exports = function(grunt) {
       },
 
       html: {
-        files: ['app/views/**/*.html'],
+        files: ['app/views/**/*.*html'],
         tasks: ['copy:views'],
         options: {
           spawn: false

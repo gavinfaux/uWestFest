@@ -1,0 +1,67 @@
+<div ng-controller="UrlPickerGridController" class="url-picker url-picker-grid">
+
+    <div ng-if="previewMode" class="row">
+        <a ng-class="control.editor.config.editorClass" href="#" prevent-default>{{title}}</a>
+        <a href class="delete-icon" ng-click="preview(false)" prevent-default><i class="icon icon-settings"></i></a>
+    </div>
+
+    <div ng-if="!previewMode">
+        <div class="link-meta">
+            <div class="row control-group" ng-hide="control.editor.config.hideTitle">
+                <label for="urlPickerTitle">Title</label>
+                <input id="urlPickerTitle" type="text" ng-model="control.value.meta.title" />
+            </div>
+            <div class="row control-group" ng-hide="control.editor.config.hideOpenNew">
+                <label>Open in new window?&nbsp;&nbsp;
+                    <input type="checkbox" ng-model="control.value.meta.newWindow" />
+                </label>
+            </div>
+        </div>
+
+        <ul class="nav nav-tabs">
+            <li ng-class="{active : control.value.type == 'url'}" ng-hide="control.editor.config.hideUrl">
+                <a ng-click="switchType('url')" href="#" prevent-default>URL</a>
+            </li>
+            <li ng-class="{active : control.value.type == 'content'}" ng-hide="control.editor.config.hideContent">
+                <a ng-click="switchType('content')" href="#" prevent-default>Content</a>
+            </li>
+            <li ng-class="{active: control.value.type == 'media'}" ng-hide="control.editor.config.hideMedia">
+                <a ng-click="switchType('media')" href="#" prevent-default>Media</a>
+            </li>
+        </ul>
+
+        <div class="tab-body">
+
+            <div ng-show="control.value.type == 'url'">
+                <input type="text" ng-model="control.value.typeData.url" />
+                <a href class="delete-icon url-delete" ng-click="resetType('url')"><i class="icon icon-delete" ng-show="control.value.typeData.url"></i></a>
+            </div>
+            <div ng-show="control.value.type == 'content'">
+                <a ng-click="openTreePicker('content')" prevent-default>Select…</a> {{contentName}}
+                <a href class="delete-icon" ng-click="resetType('content')" ng-show="control.value.typeData.contentId > 0"><i class="icon icon-delete"></i></a>
+            </div>
+            <div ng-show="control.value.type == 'media'">
+                <a ng-click="openTreePicker('media')" prevent-default>Select…</a> {{mediaName}}
+
+                <a href class="delete-icon" ng-click="resetType('media')" ng-show="control.value.typeData.mediaId > 0"><i class="icon icon-delete"></i></a>
+
+                <div class="thumbnail" ng-show="control.editor.config.mediaPreview">
+                    <img ng-src="{{media.thumbnail}}" alt="" ng-show="media.thumbnail">
+
+                    <span class="icon-holder" ng-hide="media.thumbnail">
+					<i class="icon {{media.icon}} large" ></i>
+					<small>{{media.name}}</small>
+				</span>
+                </div>
+
+
+            </div>
+        </div>
+
+
+    </div>
+    <div class="row" ng-show="controlValid">
+        <a class="btn btn-info" ng-show="!previewMode" ng-click="preview(true)" prevent-default>Preview <i class="icon icon-check"></i></a>
+    </div>
+
+</div>
