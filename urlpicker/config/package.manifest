@@ -2,7 +2,7 @@
   "gridEditors": [
     {
       "name": "Url Picker",
-      "alias": "Imulus.UrlPicker",
+      "alias": "Imulus.UrlPicker.Grid",
       "view": "~/App_Plugins/UrlPicker/views/url.picker.grid.html",
       "render": "~/App_Plugins/UrlPicker/views/url.picker.grid.cshtml",
        "icon": "icon-link",
@@ -12,10 +12,12 @@
          "hideUrl": false,
          "hideContent": false,
          "hideMedia": false,
-         "defaultType": "",
+         "defaultType": "content",
          "contentStartNode": "",
-         "editorClass" : "btn",
-         "renderClass" : "button"
+         "mediaStartNode": "",
+         "mediaImagesOnly": false,
+         "mediaPreview": true,
+         "editorClass" : "btn"
        },
      },
    ],

@@ -4,8 +4,6 @@ angular.module('umbraco').controller('UrlPickerGridController', function($scope,
 
     var alreadyDirty = false;
 
-    init();
-
     $scope.switchType = function(type) {
         $scope.control.value.type = type;
 
@@ -25,7 +23,7 @@ angular.module('umbraco').controller('UrlPickerGridController', function($scope,
     }
 
     $scope.preview = function(bool) {
-        $scope.title = getTitle(); 
+        $scope.title = getTitle();
         $scope.previewMode = bool;
     }
 
@@ -40,21 +38,19 @@ angular.module('umbraco').controller('UrlPickerGridController', function($scope,
         }
     };
 
-    function valid() {
-        var valid = false;
+    function validate() {
         switch ($scope.control.value.type) {
             case "content":
-                valid = $scope.control.value.typeData.contentId !== null;
+                $scope.controlValid = $scope.control.value.typeData.contentId !== null;
                 break;
             case "media":
-                valid = $scope.control.value.typeData.mediaId !== null;
+                $scope.controlValid = $scope.control.value.typeData.mediaId !== null;
                 break;
             default:
-                valid = $scope.urlPattern.test($scope.control.value.typeData.url) === true;
+                $scope.controlValid = $scope.urlPattern.test($scope.control.value.typeData.url) === true;
                 break;
         }
-        $scope.controlValid = valid;
-        return valid;
+        return $scope.controlValid;
     };
 
     $scope.openTreePicker = function(type) {
@@ -177,18 +173,21 @@ angular.module('umbraco').controller('UrlPickerGridController', function($scope,
         if ($scope.control.value.typeData && $scope.control.value.typeData.mediaId) {
             $scope.mediaName = getEntityName($scope.control.value.typeData.mediaId, "Media");
         }
+        if (validate() === true) {
+            $scope.preview(true);
+        }
     }
+
+    init();
 
 
     $scope.$watch('control.value', function(newval, oldval) {
-        //console.log(newval, oldval);
-  
+        validate();
 
         if (newval !== oldval) {
             //run after DOM is loaded
             $timeout(function() {
                 if (!alreadyDirty) {
-      				valid();
                     var currForm = angularHelper.getCurrentForm($scope);
                     currForm.$setDirty();
                     alreadyDirty = true;
