@@ -1,5 +1,6 @@
 angular.module('umbraco').controller('UrlPickerGridController', function($scope, dialogService, entityResource, mediaHelper, $timeout, angularHelper) {
 
+    $scope.title = '';
     var currentDialog = null;
 
     var alreadyDirty = false;
@@ -115,6 +116,10 @@ angular.module('umbraco').controller('UrlPickerGridController', function($scope,
 
         return entityResource.getById(id, typeAlias).then(function(entity) {
             return entity.name;
+
+        }, function (err) {
+            $scope.title = err.errorMsg;
+            return err.errorMsg;
         });
     }
 
@@ -142,7 +147,7 @@ angular.module('umbraco').controller('UrlPickerGridController', function($scope,
         else {
             $scope.control.editor.config.mediaPreview = true;
 
-            var mediaId = $scope.control.value.typeData.mediaId;
+            var mediaId = $scope.control.value !== null ? $scope.control.value.typeData != null ? $scope.control.value.typeData.mediaId : null : null;
 
             if (mediaId) {
                 entityResource.getById(mediaId, "Media").then(function(media) {
