@@ -1,10 +1,13 @@
 ﻿@inherits UmbracoViewPage<dynamic>
 @using Newtonsoft.Json
+@using Umbraco.Core.Logging
 @using Umbraco.Web.Mvc
 @using Umbraco.Web
 @using UrlPicker.Umbraco.Models
 
-@if (Model.value != null)
+@try
+{
+    if (Model.value != null)
 {
     //TODO: resolve via ValueConverter, remove duplicate code, tests
 
@@ -54,4 +57,15 @@
         <a role="button" class="button" @picker.Target href="@url" title="@title" >@title</a>
     }
 
+    }
+}
+catch (Exception ex)
+{
+    LogHelper.Error<UmbracoViewPage>(ex.Message, ex);
+    if (Members.IsLoggedIn() || UmbracoContext.InPreviewMode || UmbracoContext.IsDebug)
+    {
+        <div data-alert class="alert-box alert">
+            "We're sorry there was a problem displaying this part of the page; please review content.";
+        </div>
+    }
 }
