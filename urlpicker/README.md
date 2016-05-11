@@ -37,8 +37,13 @@ npm install grunt-ts
 npm install typescript
 npm install tslint
 npm install typings
+npm install grunt-tslint 
 typings install angular --ambient --save
 typings install jquery --ambient --save
+typings install jqueryui --ambient --save
+typings install umbraco --ambient --save
+typings install umbraco-resources --ambient --save
+typings install umbraco-services --ambient --save
 tsc -p ./app
 ```
 

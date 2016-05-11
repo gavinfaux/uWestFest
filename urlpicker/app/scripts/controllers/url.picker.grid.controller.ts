@@ -351,7 +351,7 @@ angular.module('umbraco').controller('UrlPickerGridController', function ($scope
 
     // Setup "render model" & defaults
     function init() {
-        var defaultType: string;
+         var defaultType = "content";
         // content start node
         if (!$scope.control.editor.config.contentStartNode)
             $scope.control.editor.config.contentStartNode = -1;

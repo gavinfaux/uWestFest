@@ -268,7 +268,7 @@ angular.module('umbraco').controller('UrlPickerGridController', function ($scope
         return !isNaN(parseInt(n, 10));
     }
     function init() {
-        var defaultType;
+        var defaultType = "content";
         if (!$scope.control.editor.config.contentStartNode)
             $scope.control.editor.config.contentStartNode = -1;
         if (!$scope.control.editor.config.mediaStartNode)

@@ -7,6 +7,15 @@ module.exports = function (grunt) {
     pkgMeta: grunt.file.readJSON('config/meta.json'),
     dest: grunt.option('target') || 'dist',
     basePath: path.join('<%= dest %>', 'App_Plugins', '<%= pkgMeta.name %>'),
+    tslint: {
+options: {
+        configuration: grunt.file.readJSON("tslint.json")
+    },
+       all: {
+        src: ["app/**/*.ts"] 
+        // avoid linting typings files and node_modules files
+    }
+      },
     ts: {
       default: {
         src: ["app/**/*.ts"]
@@ -189,7 +198,8 @@ module.exports = function (grunt) {
     }
   });
   grunt.loadNpmTasks("grunt-ts");
-  grunt.registerTask('default', ['clean', 'assemblyinfo', 'less', 'ts', 'concat', 'msbuild:dist', 'copy:config', 'copy:lang', 'copy:views', 'copy:dll']);
+  grunt.loadNpmTasks("grunt-tslint");
+  grunt.registerTask('default', ['clean', 'assemblyinfo', 'less', 'ts', 'tslint', 'concat', 'msbuild:dist', 'copy:config', 'copy:lang', 'copy:views', 'copy:dll']);
   grunt.registerTask('nuget', ['clean:tmp', 'default', 'copy:nuget', 'template:nuspec', 'nugetpack']);
   grunt.registerTask('umbraco', ['clean:tmp', 'default', 'copy:umbraco', 'umbracoPackage']);
   grunt.registerTask('package', ['clean:tmp', 'default', 'copy:nuget', 'template:nuspec', 'nugetpack', 'copy:umbraco', 'umbracoPackage', 'clean:tmp']);

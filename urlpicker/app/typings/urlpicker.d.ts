@@ -1,57 +1,57 @@
-declare namespace urlpicker {
-  interface editor {
-    config: config
-    value: any
-  }
+declare namespace UrlPicker.Umbraco {
+    interface editor {
+        config: config;
+        value: any;
+    }
 
-  interface config {
-    defaultType: string
-    contentStartNode : number
-    mediaStartNode : number
-    multipleItems : boolean
-    startWithAddButton : boolean
-    enableDisabling : boolean
-    oneAtATime : boolean
-    usePickerIcons : boolean
-    maxItems : number
-    mediaImagesOnly: boolean
-    mediaPreview: boolean
-    
-  }
-  
-  interface scope {
-    enableTooltip : boolean
-    disableTooltip: boolean
-    pickers : UrlPicker[]
-  }
-  
-  
-  interface model {
-    value: any
-    config: config
-    pickers: UrlPicker[]
-  }
 
-  interface typeData {
-    url: string
-    contentId: number
-    mediaId: number
-  }
+    interface scope {
+        enableTooltip: boolean;
+        disableTooltip: boolean;
+        pickers: Picker[];
+    }
 
-  interface meta {
-    title: string
-    newWindow: boolean
-  }
 
-  interface UrlPicker {
-    type: UrlPickerTypes
-    meta: meta
-    typeData: typeData
-    url: string
-    urlAbsolute: string
-    name: string
-    disabled: boolean
+    interface IEditorModel {
+        value: any;
+        config: config;
+    }
 
-  }
-  enum UrlPickerTypes { Url, Content, Media }
+
+    interface config {
+        defaultType: string;
+        contentStartNode: number;
+        mediaStartNode: number;
+        multipleItems: any;
+        startWithAddButton: any;
+        enableDisabling: any;
+        oneAtATime: any;
+        usePickerIcons: any;
+        maxItems: number;
+        mediaImagesOnly: any;
+        mediaPreview: any;
+    }
+
+    interface typeData {
+        url: string;
+        contentId: number;
+        mediaId: number;
+    }
+
+    interface meta {
+        title: string;
+        newWindow: boolean;
+    }
+
+    interface Picker {
+        type: string;
+        meta?: meta;
+        typeData: typeData;
+        disabled: boolean;
+        content?: any;
+        media?: any;
+        active?: boolean;
+    }
+
+ 
 }
