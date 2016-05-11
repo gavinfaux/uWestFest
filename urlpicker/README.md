@@ -8,9 +8,13 @@ Install via NuGet or the Umbraco Package Installer: https://github.com/imulus/uW
 
 ### Install Dependencies
 
+*NOTE: typings for `umbraco.services` and `umbraco.resources` are a little behind; use `git checkout -- typings` after running `typings install` and reference repository versions until resolved* 
+
 ```bash
 npm install -g grunt-cli
 npm install
+typings install
+git checkout -- typings
 ```
 
 ### Build
@@ -25,34 +29,8 @@ grunt
 grunt watch
 ```
 
-### TypeScript
-
-**wip**
-
-* not --save-dev yet
-* tsc step not needed if using grunt task
+### tslint
 
 ```bash
-npm install grunt-ts
-npm install typescript
-npm install tslint
-npm install typings
-npm install grunt-tslint 
-typings install angular --ambient --save
-typings install jquery --ambient --save
-typings install jqueryui --ambient --save
-typings install umbraco --ambient --save
-typings install umbraco-resources --ambient --save
-typings install umbraco-services --ambient --save
-tsc -p ./app
-```
-
-tsconfig.json -   "listFiles": true for debugging
-
-tsc issues? get rid of C:\Program Files (x86)\Microsoft SDKs\TypeScript\1.0 from path
-
-force build
-
-```bash
-grunt --force
+grunt tslint
 ```

@@ -30,6 +30,11 @@
   },
   "devDependencies": {
     "grunt-msbuild": "^0.1.12",
-    "grunt-typescript": "^0.8.0"
+    "grunt-ts": "^5.5.0",
+    "grunt-tslint": "^3.1.0",
+    "grunt-typescript": "^0.8.0",
+    "tslint": "^3.10.2",
+    "typescript": "^1.8.10",
+    "typings": "^0.8.1"
   }
 }

@@ -9,7 +9,7 @@ module UrlPicker.Controllers {
         model: IDefaultTypeModel;
     }
 
-    export class UrlPickerDefaultTypeController {
+    export class DefaultTypeController {
         static $inject = ["$scope"];
 
 
@@ -18,5 +18,5 @@ module UrlPicker.Controllers {
         }
     }
 
-    angular.module("umbraco").controller("UrlPicker.Controllers", UrlPickerDefaultTypeController);
+    angular.module("umbraco").controller("UrlPicker.Controllers", DefaultTypeController);
 }

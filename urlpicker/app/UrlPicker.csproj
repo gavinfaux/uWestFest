@@ -49,24 +49,14 @@
     <Reference Include="System.Core" />
   </ItemGroup>
   <ItemGroup>
-    <Content Include="scripts\controllers\default.type.js.map" />
-    <Content Include="scripts\controllers\url.picker.controller.js.map" />
-    <Content Include="scripts\controllers\url.picker.grid.controller.js.map" />
     <Content Include="styles\url.picker.less" />
     <Content Include="tsconfig.json" />
     <Content Include="views\default.type.html" />
-    <Content Include="views\url.picker.grid.html" />
     <Content Include="views\url.picker.html" />
-  </ItemGroup>
-  <ItemGroup>
-    <Content Include="scripts\controllers\default.type.js" />
-    <Content Include="scripts\controllers\url.picker.controller.js" />
-    <Content Include="scripts\controllers\url.picker.grid.controller.js" />
   </ItemGroup>
   <ItemGroup>
     <TypeScriptCompile Include="scripts\controllers\default.type.ts" />
     <TypeScriptCompile Include="scripts\controllers\url.picker.controller.ts" />
-    <TypeScriptCompile Include="scripts\controllers\url.picker.grid.controller.ts" />
     <TypeScriptCompile Include="tsd.d.ts" />
     <TypeScriptCompile Include="typings\urlpicker.d.ts" />
     <TypeScriptCompile Include="urlpicker.ts" />

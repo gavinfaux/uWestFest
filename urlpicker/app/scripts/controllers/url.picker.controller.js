@@ -3,9 +3,51 @@ var UrlPicker;
     var Controllers;
     (function (Controllers) {
         "use strict";
+        var ModelWrapper = (function () {
+            function ModelWrapper(control) {
+                this.gridControl = control;
+                this.pickerConfig = control.editor.config;
+            }
+            Object.defineProperty(ModelWrapper.prototype, "config", {
+                get: function () {
+                    return this.pickerConfig;
+                },
+                set: function (value) {
+                    this.pickerConfig = value;
+                },
+                enumerable: true,
+                configurable: true
+            });
+            Object.defineProperty(ModelWrapper.prototype, "control", {
+                get: function () {
+                    return this.gridControl;
+                },
+                set: function (value) {
+                    this.gridControl = value;
+                },
+                enumerable: true,
+                configurable: true
+            });
+            Object.defineProperty(ModelWrapper.prototype, "value", {
+                get: function () {
+                    return this.gridControl.value;
+                },
+                set: function (value) {
+                    this.gridControl.value = value;
+                },
+                enumerable: true,
+                configurable: true
+            });
+            return ModelWrapper;
+        }());
+        Controllers.ModelWrapper = ModelWrapper;
         var UrlPickerController = (function () {
             function UrlPickerController($scope, $timeout, dialogService, entityResource, mediaHelper, angularHelper, iconHelper, localizationService) {
                 this.$scope = $scope;
+                if ($scope.control) {
+                    var model = new ModelWrapper($scope.control);
+                    $scope.model = model;
+                }
                 var currentDialog = null;
                 init();
                 $scope.form = $scope.form || angularHelper.getCurrentForm($scope);
@@ -33,12 +75,9 @@ var UrlPicker;
                     }
                     var dialog;
                     if (type === "media") {
-                        dialog = dialogService.mediaPicker({
-                            onlyImages: $scope.model.config.mediaImagesOnly,
-                            multiPicker: false,
+                        dialog = dialogService.mediaPicker(({
                             callback: function (data) {
                                 var media = data;
-                                console.log("media", media);
                                 if (media.parentId >= -1) {
                                     if (!media.thumbnail) {
                                         media.thumbnail = mediaHelper.resolveFileFromEntity(media, true);
@@ -50,24 +89,24 @@ var UrlPicker;
                                     };
                                     picker.typeData.mediaId = media.id;
                                 }
-                                $scope.sync();
                                 $scope.setDirty();
-                            }
-                        });
+                            },
+                            multiPicker: false,
+                            onlyImages: $scope.model.config.mediaImagesOnly
+                        }));
                     }
                     else {
                         dialog = dialogService.treePicker({
-                            section: type,
-                            treeAlias: type,
-                            startNodeId: getStartNodeId(type),
-                            multiPicker: false,
                             callback: function (data) {
                                 var content = data;
                                 picker.content = { "name": content.name, "icon": getSafeIcon(content.icon) };
                                 picker.typeData.contentId = content.id;
-                                $scope.sync();
                                 $scope.setDirty();
-                            }
+                            },
+                            multiPicker: false,
+                            section: type,
+                            startNodeId: getStartNodeId(type),
+                            treeAlias: type
                         });
                     }
                     currentDialog = dialog;
@@ -83,6 +122,9 @@ var UrlPicker;
                         }
                         if (picker.type === "url") {
                             icon = "icon-link";
+                        }
+                        if (!isNullOrEmpty(picker.error)) {
+                            icon = "color-red icon-application-error";
                         }
                     }
                     return icon;
@@ -100,6 +142,9 @@ var UrlPicker;
                         if (picker.type === "url") {
                             title = metaTitle || picker.typeData.url;
                         }
+                    }
+                    if (!isNullOrEmpty(picker.error)) {
+                        title = picker.error;
                     }
                     return title;
                 };
@@ -126,7 +171,6 @@ var UrlPicker;
                 $scope.showAddButton = function () { return ($scope.model.config.startWithAddButton && countVisible() === 0); };
                 $scope.enableDisable = function (picker, $event) {
                     picker.disabled = !picker.disabled;
-                    $scope.sync();
                     $scope.setDirty();
                     if ($event.stopPropagation) {
                         $event.stopPropagation();
@@ -145,6 +189,7 @@ var UrlPicker;
                 };
                 $scope.canRemove = function () { return (countVisible() > 1 || $scope.model.config.startWithAddButton); };
                 $scope.setDirty = function () {
+                    $scope.sync();
                     if ($scope.form) {
                         $scope.form.$setDirty();
                     }
@@ -158,7 +203,8 @@ var UrlPicker;
                         "type": defaultType,
                         "meta": { "title": "", "newWindow": false },
                         "typeData": { "url": "", "contentId": null, "mediaId": null },
-                        "disabled": false
+                        "disabled": false,
+                        "active": true, "error": ""
                     };
                     if ($scope.model.config.oneAtATime) {
                         for (var i = 0; i < $scope.pickers.length; i++) {
@@ -175,8 +221,6 @@ var UrlPicker;
                         $scope.pickers.push(pickerObj);
                         $scope.pickers[$scope.pickers.length - 1].active = true;
                     }
-                    console.log("$scope.sync()");
-                    $scope.sync();
                     $scope.setDirty();
                     if ($event.stopPropagation) {
                         $event.stopPropagation();
@@ -208,7 +252,6 @@ var UrlPicker;
                     var index = $scope.pickers.indexOf(picker);
                     if (confirm("Are you sure you want to remove this item?")) {
                         $scope.pickers.splice(index, 1);
-                        $scope.sync();
                         $scope.setDirty();
                     }
                     if ($event.stopPropagation) {
@@ -222,13 +265,12 @@ var UrlPicker;
                 };
                 $scope.sortableOptions = {
                     axis: "y",
-                    cursor: "move",
-                    handle: ".handle",
                     cancel: ".no-drag",
-                    tolerance: "intersect",
+                    cursor: "move",
+                    forcePlaceholderSize: true,
+                    handle: ".handle",
                     items: "> li:not(.unsortable)",
                     placeholder: "sortable-placeholder",
-                    forcePlaceholderSize: true,
                     start: function (ev, ui) {
                         var height = ui.item.height();
                         var width = ui.item.width();
@@ -238,11 +280,12 @@ var UrlPicker;
                             top: Math.floor(height / 2)
                         });
                     },
-                    update: function () {
-                        $scope.setDirty();
-                    },
                     stop: function () {
                         return;
+                    },
+                    tolerance: "intersect",
+                    update: function () {
+                        $scope.setDirty();
                     }
                 };
                 function countVisible() {
@@ -257,7 +300,8 @@ var UrlPicker;
                             "type": config.defaultType,
                             "meta": { "title": "", "newWindow": false },
                             "typeData": { "url": "", "contentId": null, "mediaId": null },
-                            "disabled": false
+                            "disabled": false,
+                            "active": true, "error": ""
                         }
                     ];
                 }
@@ -289,7 +333,7 @@ var UrlPicker;
                     if (!$scope.model.config.mediaStartNode) {
                         $scope.model.config.mediaStartNode = -1;
                     }
-                    if (!$scope.model.config.multipleItems || $scope.model.config.multipleItems === 0) {
+                    if (!$scope.model.config.multipleItems) {
                         $scope.model.config.multipleItems = false;
                     }
                     else {
@@ -301,25 +345,25 @@ var UrlPicker;
                     else {
                         defaultType = "content";
                     }
-                    if (!$scope.model.config.startWithAddButton || $scope.model.config.startWithAddButton === 0) {
+                    if (!$scope.model.config.startWithAddButton) {
                         $scope.model.config.startWithAddButton = false;
                     }
                     else {
                         $scope.model.config.startWithAddButton = true;
                     }
-                    if (!$scope.model.config.enableDisabling || $scope.model.config.enableDisabling === 0) {
+                    if (!$scope.model.config.enableDisabling) {
                         $scope.model.config.enableDisabling = false;
                     }
                     else {
                         $scope.model.config.enableDisabling = true;
                     }
-                    if (!$scope.model.config.oneAtATime || $scope.model.config.oneAtATime === 0) {
+                    if (!$scope.model.config.oneAtATime) {
                         $scope.model.config.oneAtATime = false;
                     }
                     else {
                         $scope.model.config.oneAtATime = true;
                     }
-                    if (!$scope.model.config.usePickerIcons || $scope.model.config.usePickerIcons === 0) {
+                    if (!$scope.model.config.usePickerIcons) {
                         $scope.model.config.usePickerIcons = false;
                     }
                     else {
@@ -335,13 +379,13 @@ var UrlPicker;
                             ? $scope.model.config.maxItems
                             : Number.MAX_VALUE;
                     }
-                    if (!$scope.model.config.mediaImagesOnly || $scope.model.config.mediaImagesOnly === 0) {
+                    if (!$scope.model.config.mediaImagesOnly) {
                         $scope.model.config.mediaImagesOnly = false;
                     }
                     else {
                         $scope.model.config.mediaImagesOnly = true;
                     }
-                    if (!$scope.model.config.mediaPreview || $scope.model.config.mediaPreview === 0) {
+                    if (!$scope.model.config.mediaPreview) {
                         $scope.model.config.mediaPreview = false;
                     }
                     else {
@@ -352,45 +396,52 @@ var UrlPicker;
                     $scope.pickers = $scope.model.value
                         ? angular.fromJson($scope.model.value)
                         : getDefaultModel($scope.model.config);
-                    angular.forEach($scope.pickers, function (obj) {
+                    angular.forEach($scope.pickers, function (picker) {
                         var contentId;
                         var mediaId;
-                        if (obj.typeData) {
-                            if (obj.typeData.contentId) {
-                                contentId = obj.typeData.contentId;
+                        if (picker.typeData) {
+                            if (picker.typeData.contentId) {
+                                contentId = picker.typeData.contentId;
                             }
                             ;
-                            if (obj.typeData.mediaId) {
-                                mediaId = obj.typeData.mediaId;
+                            if (picker.typeData.mediaId) {
+                                mediaId = picker.typeData.mediaId;
                             }
                             ;
                         }
                         if (contentId) {
                             entityResource.getById(contentId, "Document")
                                 .then(function (content) {
-                                if (content.data.parentId >= -1) {
-                                    obj.content = {
-                                        "name": content.data.name,
-                                        "icon": getSafeIcon(content.data.icon)
+                                if (content.parentId >= -1) {
+                                    picker.content = {
+                                        "name": content.name,
+                                        "icon": getSafeIcon(content.icon)
                                     };
                                 }
+                            }, function (error) {
+                                console.log(error.errorMsg);
+                                picker.error = error.errorMsg;
                             });
                         }
                         if (mediaId) {
                             entityResource.getById(mediaId, "Media")
                                 .then(function (media) {
-                                if (media.data.parentId >= -1) {
-                                    if (!media.data.thumbnail) {
-                                        media.data.thumbnail = mediaHelper.resolveFileFromEntity(media, true);
+                                if (media.parentId >= -1) {
+                                    if (!media.thumbnail) {
+                                        media.thumbnail = mediaHelper.resolveFileFromEntity(media, true);
                                     }
-                                    obj.media = {
-                                        "name": media.data.name,
-                                        "thumbnail": media.data.thumbnail,
-                                        "icon": getSafeIcon(media.data.icon)
+                                    picker.media = {
+                                        "name": media.name,
+                                        "thumbnail": media.thumbnail,
+                                        "icon": getSafeIcon(media.icon)
                                     };
                                 }
+                            }, function (error) {
+                                console.log(error.errorMsg);
+                                picker.error = error.errorMsg;
                             });
                         }
+                        ;
                     });
                 }
                 $scope.sync = function () {
@@ -399,6 +450,7 @@ var UrlPicker;
                         delete v.active;
                         delete v.media;
                         delete v.content;
+                        delete v.error;
                     });
                     $scope.model.value = angular.toJson(array, true);
                 };

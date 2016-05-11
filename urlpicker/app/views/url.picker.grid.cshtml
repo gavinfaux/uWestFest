@@ -1,67 +1,34 @@
 ﻿@inherits UmbracoViewPage<dynamic>
-@using Newtonsoft.Json
 @using Umbraco.Core.Logging
 @using Umbraco.Web.Mvc
 @using Umbraco.Web
+@using UrlPicker.Umbraco.Extensions
 @using UrlPicker.Umbraco.Models
 
 @try
 {
-    if (Model.value != null)
-{
-    //TODO: resolve via ValueConverter, remove duplicate code, tests
-
-    UrlPicker picker = JsonConvert.DeserializeObject<UrlPicker>(Model.value.ToString());
-    
-    string url = string.Empty;
-    string name = string.Empty;
-
-    switch (picker.Type)
+    if (Model.value != null && Extensions.DetectIsJson(Model.value.ToString()))
     {
-        case UrlPicker.UrlPickerTypes.Content:
-            if (picker.TypeData.ContentId.HasValue && picker.TypeData.ContentId > 0)
+        var cssClass = string.Empty;
+        if (Model.editor != null && Model.editor.config != null && Model.editor.config.cssClass != null && !string.IsNullOrEmpty(Model.editor.config.cssClass.ToString()))
+        {
+            cssClass = Model.editor.config.cssClass;
+        }
+        var helper = new UmbracoHelper(UmbracoContext.Current);
+        var pickers =  Extensions.AsTyped(helper, Model.value.ToString());
+        foreach (var picker in pickers)
+        {
+            if (!string.IsNullOrEmpty(picker.Url))
             {
-                picker.TypeData.Content = Umbraco.TypedContent(picker.TypeData.ContentId);
-                if (picker.TypeData.Content.IsVisible() && !Umbraco.IsProtected(picker.TypeData.Content.Path))
-                {
-                    url = picker.TypeData.Content.Url;
-                    name = picker.TypeData.Content.Name;
-                }
 
+                <a class="@cssClass" @picker.Target href="@picker.Url" title="@picker.Name">@picker.Name</a>
             }
-            break;
-        case UrlPicker.UrlPickerTypes.Media:
-            if (picker.TypeData.MediaId.HasValue && picker.TypeData.MediaId > 0 )
-            {
-                picker.TypeData.Media = Umbraco.TypedMedia(picker.TypeData.MediaId);
-                if (picker.TypeData.Media.IsVisible() && !Umbraco.IsProtected(picker.TypeData.Media.Path))
-                {
-                    url = picker.TypeData.Media.Url;
-                    name = picker.TypeData.Media.Name;
-                }
-            }
-
-            break;
-        case UrlPicker.UrlPickerTypes.Url:
-            url = picker.TypeData.Url;
-            name = string.IsNullOrEmpty(picker.Name) ? picker.TypeData.Url : picker.Name;
-            break;
-    }
-
-
-
-    if (!string.IsNullOrEmpty(url))
-    {
-        var title = picker.Meta != null && picker.Meta.Title != null && !String.IsNullOrEmpty(picker.Meta.Title) ? picker.Meta.Title : name;
-
-        <a role="button" class="button" @picker.Target href="@url" title="@title" >@title</a>
-    }
-
+        }
     }
 }
 catch (Exception ex)
 {
-    LogHelper.Error<UmbracoViewPage>(ex.Message, ex);
+    LogHelper.Error<UrlPicker>(ex.Message, ex);
     if (Members.IsLoggedIn() || UmbracoContext.InPreviewMode || UmbracoContext.IsDebug)
     {
         <div data-alert class="alert-box alert">

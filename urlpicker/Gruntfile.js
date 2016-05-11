@@ -25,7 +25,6 @@ options: {
       dist: {
         src: [
           'app/scripts/controllers/url.picker.controller.js',
-          'app/scripts/controllers/url.picker.grid.controller.js',
           'app/scripts/controllers/default.type.js'
         ],
         dest: '<%= basePath %>/js/url.picker.js',
@@ -199,7 +198,7 @@ options: {
   });
   grunt.loadNpmTasks("grunt-ts");
   grunt.loadNpmTasks("grunt-tslint");
-  grunt.registerTask('default', ['clean', 'assemblyinfo', 'less', 'ts', 'tslint', 'concat', 'msbuild:dist', 'copy:config', 'copy:lang', 'copy:views', 'copy:dll']);
+  grunt.registerTask('default', ['clean', 'assemblyinfo', 'less', 'ts',  'concat', 'msbuild:dist', 'copy:config', 'copy:lang', 'copy:views', 'copy:dll']);
   grunt.registerTask('nuget', ['clean:tmp', 'default', 'copy:nuget', 'template:nuspec', 'nugetpack']);
   grunt.registerTask('umbraco', ['clean:tmp', 'default', 'copy:umbraco', 'umbracoPackage']);
   grunt.registerTask('package', ['clean:tmp', 'default', 'copy:nuget', 'template:nuspec', 'nugetpack', 'copy:umbraco', 'umbracoPackage', 'clean:tmp']);

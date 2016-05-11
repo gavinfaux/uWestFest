@@ -3,16 +3,16 @@ var UrlPicker;
     var Controllers;
     (function (Controllers) {
         "use strict";
-        var UrlPickerDefaultTypeController = (function () {
-            function UrlPickerDefaultTypeController($scope) {
+        var DefaultTypeController = (function () {
+            function DefaultTypeController($scope) {
                 this.$scope = $scope;
                 $scope.model.value = $scope.model.value || "content";
             }
-            UrlPickerDefaultTypeController.$inject = ["$scope"];
-            return UrlPickerDefaultTypeController;
+            DefaultTypeController.$inject = ["$scope"];
+            return DefaultTypeController;
         }());
-        Controllers.UrlPickerDefaultTypeController = UrlPickerDefaultTypeController;
-        angular.module("umbraco").controller("UrlPicker.Controllers", UrlPickerDefaultTypeController);
+        Controllers.DefaultTypeController = DefaultTypeController;
+        angular.module("umbraco").controller("UrlPicker.Controllers", DefaultTypeController);
     })(Controllers = UrlPicker.Controllers || (UrlPicker.Controllers = {}));
 })(UrlPicker || (UrlPicker = {}));
 //# sourceMappingURL=default.type.js.map

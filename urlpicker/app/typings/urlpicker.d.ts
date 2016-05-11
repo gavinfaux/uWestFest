@@ -1,57 +1,58 @@
-declare namespace UrlPicker.Umbraco {
-    interface editor {
-        config: config;
-        value: any;
+declare namespace Immulus {
+
+    interface IControlEditor {
+        config: IPickerConfig;
     }
 
-
-    interface scope {
-        enableTooltip: boolean;
-        disableTooltip: boolean;
-        pickers: Picker[];
+   interface IPickerModel {
+        value: string;
+        config: IPickerConfig;
     }
 
-
-    interface IEditorModel {
-        value: any;
-        config: config;
+    interface IGridControl {
+        value: string;
+        editor: IControlEditor;
     }
 
-
-    interface config {
+    interface IPickerConfig {
+        hideTitle: boolean;
+        hideOpenNew: boolean;
+        hideUrl: boolean;
+        hideContent: boolean;
+        hideMedia: boolean;
         defaultType: string;
         contentStartNode: number;
         mediaStartNode: number;
-        multipleItems: any;
-        startWithAddButton: any;
-        enableDisabling: any;
-        oneAtATime: any;
-        usePickerIcons: any;
+        multipleItems: boolean;
+        startWithAddButton: boolean;
+        enableDisabling: boolean;
+        oneAtATime: boolean;
+        usePickerIcons: boolean;
         maxItems: number;
-        mediaImagesOnly: any;
-        mediaPreview: any;
+        mediaImagesOnly: boolean;
+        mediaPreview: boolean;
     }
 
-    interface typeData {
+    interface IPickerTypeData {
         url: string;
         contentId: number;
         mediaId: number;
     }
 
-    interface meta {
+    interface IUrlMetaData {
         title: string;
         newWindow: boolean;
     }
 
-    interface Picker {
+    interface IUrlPicker {
         type: string;
-        meta?: meta;
-        typeData: typeData;
+        meta: IUrlMetaData;
+        typeData: IPickerTypeData;
         disabled: boolean;
         content?: any;
         media?: any;
-        active?: boolean;
+        active: boolean;
+        error: string;
     }
 
- 
 }

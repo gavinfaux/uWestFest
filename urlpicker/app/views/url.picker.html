@@ -1,71 +1,80 @@
-<div ng-controller="UrlPickerController" class="url-picker">
+﻿<div ng-controller="UrlPicker.Controllers.UrlPickerController" class="url-picker">
 	<ul ui-sortable="sortableOptions" ng-model="pickers" class="picker-wrapper" ng-show="!showAddButton()">
 		<li ng-repeat="picker in pickers" ng-class="{ 'unsortable': !model.config.multipleItems || pickers.length <= 1 }">
 			<div class="panel panel-default" ng-class="{ 'dimmed': picker.disabled, 'collapsed': !picker.active }">
-                
-                <div ng-click="editItem(picker)" class="panel-heading clearfix">
-                    <span class="caret" ng-show="model.config.multipleItems"></span>
-                    <span class="truncate"><i class="icon {{getPickerIcon(picker)}}" ng-show="model.config.usePickerIcons"></i>{{getPickerHeading(picker)}}</span>
-                	<div class="picker-controls pull-right">
+
+				<div ng-click="editItem(picker)" class="panel-heading clearfix">
+					<span class="caret" ng-show="model.config.multipleItems"></span>
+					<span class="truncate"><i class="icon {{getPickerIcon(picker)}}" ng-show="model.config.usePickerIcons"></i>{{getPickerHeading(picker)}}</span>
+					<div class="picker-controls pull-right">
 						<i class="icon icon-add" ng-click="addItem(picker, $event)" ng-show="canAdd()" localize="title" title="@urlPicker_add"></i>
 						<i class="icon icon-navigation handle" ng-show="canSort()" localize="title" title="@urlPicker_move"></i>
 						<i class="icon icon-power" ng-click="enableDisable(picker, $event)" ng-show="canDisable()" ng-attr-title="{{ picker.disabled ? enableTooltip : disableTooltip }}"></i>
 						<i class="icon icon-delete" ng-click="removeItem(picker, $event)" ng-show="canRemove()" localize="title" title="@urlPicker_remove"></i>
-                	</div>
-                </div>
+					</div>
+				</div>
 
-            	<div class="panel-body">
-	<div class="link-meta">
+				<div class="panel-body">
+					<div class="link-meta">
 						<div class="row control-group link-title" ng-hide="model.config.hideTitle">
-							<label for="urlPickerTitle-{{$index + 1}}"><localize key="urlPicker_title">Title</localize></label> <input id="urlPickerTitle-{{$index + 1}}" type="text" ng-model="picker.meta.title" />
-		</div>
+							<label for="urlPickerTitle-{{$index + 1}}"><localize key="urlPicker_title">Title</localize></label> <input id="urlPickerTitle-{{$index + 1}}"
+								type="text" ng-model="picker.meta.title" ng-change="setDirty()"/>
+						</div>
 						<div class="row control-group link-newwindow" ng-hide="model.config.hideOpenNew">
-							<label><localize key="urlPicker_newWindow">Open in new window?</localize>&nbsp;&nbsp;<input type="checkbox" ng-model="picker.meta.newWindow" /></label>
-		</div>
-	</div>
+							<label><localize key="urlPicker_newWindow">Open in new window?</localize>&nbsp;&nbsp;<input type="checkbox" ng-model="picker.meta.newWindow" ng-change="setDirty()"/></label>
+						</div>
+					</div>
 
-	<ul class="nav nav-tabs">
+					<ul class="nav nav-tabs">
 						<li ng-class="{active : picker.type == 'url'}" ng-hide="model.config.hideUrl">
-							<a ng-click="switchType('url', picker)" href="#" prevent-default><localize key="urlPicker_url">URL</localize></a>
-		</li>
+							<a ng-click="switchType('url', picker)" href="#" prevent-default>
+								<localize key="urlPicker_url">URL</localize>
+							</a>
+						</li>
 						<li ng-class="{active : picker.type == 'content'}" ng-hide="model.config.hideContent">
-							<a ng-click="switchType('content', picker)" href="#" prevent-default><localize key="urlPicker_content">Content</localize></a>
-		</li>
+							<a ng-click="switchType('content', picker)" href="#" prevent-default>
+								<localize key="urlPicker_content">Content</localize>
+							</a>
+						</li>
 						<li ng-class="{active: picker.type == 'media'}" ng-hide="model.config.hideMedia">
-							<a ng-click="switchType('media', picker)" href="#" prevent-default><localize key="urlPicker_media">Media</localize></a>
-		</li>
-	</ul>
+							<a ng-click="switchType('media', picker)" href="#" prevent-default>
+								<localize key="urlPicker_media">Media</localize>
+							</a>
+						</li>
+					</ul>
 
-	<div class="tab-body">
+					<div class="tab-body">
 						<div ng-show="picker.type == 'url'">
-							<input type="text" ng-model="picker.typeData.url" localize="placeholder" placeholder="@urlPicker_urlPlaceholder" />
+							<input type="text" ng-model="picker.typeData.url" ng-change="setDirty()" localize="placeholder" placeholder="@urlPicker_urlPlaceholder" />
 							<a href class="delete-icon url-delete" ng-click="resetType('url', picker)"><i class="icon icon-delete" ng-show="picker.typeData.url"></i></a>
 						</div>
 						<div ng-show="picker.type == 'content'">
-							<a ng-click="openTreePicker('content', picker)" class="select" prevent-default><localize key="urlPicker_select">Select</localize>…</a>
+							<a ng-click="openTreePicker('content', picker)" class="select" prevent-default>
+								<localize key="urlPicker_select">Select</localize>…</a>
 							<span class="truncate"><i class="icon {{picker.content.icon}}"></i> {{picker.content.name}}</span>
 							<a href class="delete-icon" ng-click="resetType('content', picker)" ng-show="picker.typeData.contentId > 0"><i class="icon icon-delete"></i></a>
-		</div>
+						</div>
 						<div ng-show="picker.type == 'media'">
-							<a ng-click="openTreePicker('media', picker)" class="select" prevent-default><localize key="urlPicker_select">Select</localize>…</a>
-                            <span class="truncate"><i class="icon {{picker.media.icon}}"></i> {{picker.media.name}}</span>
+							<a ng-click="openTreePicker('media', picker)" class="select" prevent-default>
+								<localize key="urlPicker_select">Select</localize>…</a>
+							<span class="truncate"><i class="icon {{picker.media.icon}}"></i> {{picker.media.name}}</span>
 
 							<a href class="delete-icon" ng-click="resetType('media', picker)" ng-show="picker.typeData.mediaId > 0"><i class="icon icon-delete"></i></a>
 
-			<div class="thumbnail" ng-show="model.config.mediaPreview">
+							<div class="thumbnail" ng-show="model.config.mediaPreview">
 								<img ng-src="{{picker.media.thumbnail}}" alt="" ng-show="picker.media.thumbnail">
-				
+
 								<span class="icon-holder" ng-hide="picker.media.thumbnail">
 									<i class="icon {{picker.media.icon}} large" ></i>
 									<small>{{picker.media.name}}</small>
 				</span>
-			</div>
-		</div>
-	</div>
+							</div>
+						</div>
+					</div>
 
-</div>
+				</div>
 			</div>
 		</li>
-    </ul>
+	</ul>
 	<a href="#" ng-click="addItem(null, $event)" ng-show="showAddButton()" prevent-default><i class="icon icon-add blue"></i> <localize key="urlPicker_addItem">Add item</localize></a>
 </div>

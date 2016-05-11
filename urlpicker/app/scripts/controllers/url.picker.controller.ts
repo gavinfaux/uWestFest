@@ -1,30 +1,57 @@
 module UrlPicker.Controllers {
     "use strict";
+    export class ModelWrapper implements Immulus.IPickerModel {
+        private gridControl: Immulus.IGridControl;
+        private pickerConfig: Immulus.IPickerConfig;
+
+        constructor(control: Immulus.IGridControl) {
+            this.gridControl = control;
+            this.pickerConfig = control.editor.config;
+        }
+        get config(): Immulus.IPickerConfig {
+            return this.pickerConfig;
+        }
+        set config(value: Immulus.IPickerConfig) {
+            this.pickerConfig = value;
+        }
+        get control(): Immulus.IGridControl {
+            return this.gridControl;
+        }
+        set control(value: Immulus.IGridControl) {
+            this.gridControl = value;
+        }
+        get value(): string {
+            return this.gridControl.value;
+        }
+        set value(value: string) {
+            this.gridControl.value = value;
+        }
+    }
 
     interface IUrlPickerControllerScope extends ng.IScope {
-        model: Umbraco.IEditorModel;
-        pickers: Umbraco.Picker[];
-        control: any;
+        model: ModelWrapper;
+        pickers: Immulus.IUrlPicker[];
+        control: Immulus.IGridControl;
         form: ng.IFormController;
         enableTooltip: boolean;
         disableTooltip: boolean;
-        switchType(type: string, picker: Umbraco.Picker): void;
-        resetType(type: string, picker: Umbraco.Picker): void;
-        openTreePicker(type: string, picker: Umbraco.Picker): void;
+        switchType(type: string, picker: Immulus.IUrlPicker): void;
+        resetType(type: string, picker: Immulus.IUrlPicker): void;
+        openTreePicker(type: string, picker: Immulus.IUrlPicker): void;
         setDirty(): void;
         sync(): void;
-        getPickerIcon: (picker: any) => string;
-        isEmpty(picker: Umbraco.Picker);
-        getPickerHeading: (picker: any) => string;
+        getPickerIcon: (picker: Immulus.IUrlPicker) => string;
+        isEmpty(picker: Immulus.IUrlPicker);
+        getPickerHeading: (picker: Immulus.IUrlPicker) => string;
         canSort: () => boolean;
         canDisable: () => boolean;
         showAddButton: () => boolean;
-        enableDisable: (picker: any, $event: any) => void;
+        enableDisable: (picker: Immulus.IUrlPicker, $event: any) => void;
         canAdd: () => boolean;
         canRemove: () => boolean;
-        addItem: (picker: any, $event: any) => void;
-        editItem: (picker: any) => void;
-        removeItem: (picker: any, $event: any) => void;
+        addItem: (picker: Immulus.IUrlPicker, $event: any) => void;
+        editItem: (picker: Immulus.IUrlPicker) => void;
+        removeItem: (picker: Immulus.IUrlPicker, $event: any) => void;
         sortableOptions: {
             axis: string;
             cursor: string;
@@ -54,22 +81,25 @@ module UrlPicker.Controllers {
             entityResource: umbraco.resources.IEntityResource,
             mediaHelper: umbraco.services.IMediaHelper,
             angularHelper: umbraco.services.IAngularHelper,
-            iconHelper: any,
-            localizationService: any
+            iconHelper: any, // todo: umbraco.services.IIconHelper
+            localizationService: any // todo: umbraco.services.ILocalizationService
         ) {
-            var currentDialog = null;
+            if ($scope.control) {
+                let model = new ModelWrapper($scope.control);
+                $scope.model = model;
+            }
 
-
+            let currentDialog: umbraco.services.IModal = null;
             init();
 
             // get a reference to the current form
             $scope.form = $scope.form || angularHelper.getCurrentForm($scope);
 
-            $scope.switchType = (type: string, picker: Umbraco.Picker) => {
+            $scope.switchType = (type: string, picker: Immulus.IUrlPicker) => {
                 const index = $scope.pickers.indexOf(picker);
                 $scope.pickers[index].type = type;
             };
-            $scope.resetType = (type: string, picker: Umbraco.Picker) => {
+            $scope.resetType = (type: string, picker: Immulus.IUrlPicker) => {
                 const index = $scope.pickers.indexOf(picker);
                 if (type === "content") {
                     $scope.pickers[index].typeData.contentId = null;
@@ -81,23 +111,20 @@ module UrlPicker.Controllers {
                     $scope.pickers[index].typeData.url = "";
                 }
             };
-            $scope.openTreePicker = (type: string, picker: Umbraco.Picker) => {
+            $scope.openTreePicker = (type: string, picker: Immulus.IUrlPicker) => {
 
                 // ensure the current dialog is cleared before creating another!
                 if (currentDialog) {
                     dialogService.close(currentDialog);
                 }
 
-                var dialog: umbraco.services.IModal;
+                let dialog: umbraco.services.IModal;
 
                 if (type === "media") {
-                    dialog = dialogService.mediaPicker({
-                        onlyImages: $scope.model.config.mediaImagesOnly,
-                        multiPicker: false,
+                    dialog = dialogService.mediaPicker(({
                         callback: (data: any) => {
 
                             const media = data;
-                            console.log("media", media);
 
                             // only show non-trashed items
                             if (media.parentId >= -1) {
@@ -114,18 +141,14 @@ module UrlPicker.Controllers {
                                 picker.typeData.mediaId = media.id;
                             }
 
-                            $scope.sync();
                             $scope.setDirty();
-                        }
-
-                    });
+                        },
+                        multiPicker: false,
+                        onlyImages: $scope.model.config.mediaImagesOnly
+                    }) as any);
                 } else {
 
                     dialog = dialogService.treePicker({
-                        section: type,
-                        treeAlias: type,
-                        startNodeId: getStartNodeId(type),
-                        multiPicker: false,
                         callback: (data: any) => {
 
                             const content = data;
@@ -133,9 +156,12 @@ module UrlPicker.Controllers {
                             picker.content = { "name": content.name, "icon": getSafeIcon(content.icon) };
                             picker.typeData.contentId = content.id;
 
-                            $scope.sync();
                             $scope.setDirty();
-                        }
+                        },
+                        multiPicker: false,
+                        section: type,
+                        startNodeId: getStartNodeId(type),
+                        treeAlias: type
                     });
 
                 }
@@ -143,8 +169,8 @@ module UrlPicker.Controllers {
                 // save the currently assigned dialog so it can be removed before a new one is created
                 currentDialog = dialog;
             };
-            $scope.getPickerIcon = (picker: Umbraco.Picker) => {
-                var icon = "icon-anchor";
+            $scope.getPickerIcon = (picker: Immulus.IUrlPicker) => {
+                let icon = "icon-anchor";
 
                 if (!$scope.isEmpty(picker)) {
                     if (picker.type === "content" && picker.content && picker.content.icon) {
@@ -156,12 +182,15 @@ module UrlPicker.Controllers {
                     if (picker.type === "url") {
                         icon = "icon-link";
                     }
+                    if (!isNullOrEmpty(picker.error)) {
+                        icon = "color-red icon-application-error";
+                    }
                 }
 
                 return icon;
             };
-            $scope.getPickerHeading = (picker: Umbraco.Picker) => {
-                var title = "(no link)";
+            $scope.getPickerHeading = (picker: Immulus.IUrlPicker) => {
+                let title = "(no link)";
 
                 if (!$scope.isEmpty(picker) && picker.typeData) {
                     const metaTitle = picker.meta.title;
@@ -176,12 +205,14 @@ module UrlPicker.Controllers {
                         title = metaTitle || picker.typeData.url;
                     }
                 }
-
+                if (!isNullOrEmpty(picker.error)) {
+                    title = picker.error;
+                }
                 return title;
             };
 
             // helper to check if picker is empty
-            $scope.isEmpty = (picker: Umbraco.Picker) => {
+            $scope.isEmpty = (picker: Immulus.IUrlPicker) => {
                 if (picker.type === "content") {
                     if (!isNullOrEmpty(picker.typeData.contentId)) {
                         return false;
@@ -208,9 +239,9 @@ module UrlPicker.Controllers {
 
             // helpers for determining if the add button should be shown
             $scope.showAddButton = () => ($scope.model.config.startWithAddButton && countVisible() === 0);
-            $scope.enableDisable = (picker: Umbraco.Picker, $event: any) => {
+            $scope.enableDisable = (picker: Immulus.IUrlPicker, $event: any) => {
                 picker.disabled = !picker.disabled;
-                $scope.sync();
+
                 // explicitly set the form as dirty when manipulating the enabled/disabled state of a picker
                 $scope.setDirty();
 
@@ -238,12 +269,13 @@ module UrlPicker.Controllers {
 
             // helper to force the current form into the dirty state
             $scope.setDirty = () => {
+                $scope.sync();
                 if ($scope.form) {
                     $scope.form.$setDirty();
                 }
             };
-            $scope.addItem = (picker: Umbraco.Picker, $event: any) => {
-                var defaultType = "content";
+            $scope.addItem = (picker: Immulus.IUrlPicker, $event: any) => {
+                let defaultType = "content";
                 if ($scope.model.config.defaultType) {
                     defaultType = $scope.model.config.defaultType;
                 }
@@ -252,7 +284,8 @@ module UrlPicker.Controllers {
                     "type": defaultType,
                     "meta": { "title": "", "newWindow": false },
                     "typeData": { "url": "", "contentId": null, "mediaId": null },
-                    "disabled": false
+                    "disabled": false,
+                    "active": true, "error": ""
                 };
 
                 // collapse other panels
@@ -272,9 +305,6 @@ module UrlPicker.Controllers {
                     $scope.pickers[$scope.pickers.length - 1].active = true;
                 }
 
-                console.log("$scope.sync()");
-                $scope.sync();
-
                 // explicitly set the form as dirty when manipulating the enabled/disabled state of a picker
                 $scope.setDirty();
 
@@ -288,7 +318,7 @@ module UrlPicker.Controllers {
                 $event.cancelBubble = true;
                 $event.returnValue = false;
             };
-            $scope.editItem = (picker: Umbraco.Picker) => {
+            $scope.editItem = (picker: Immulus.IUrlPicker) => {
 
                 const index = $scope.pickers.indexOf(picker);
                 const isActive = $scope.pickers[index].active;
@@ -309,11 +339,10 @@ module UrlPicker.Controllers {
                 }
 
             };
-            $scope.removeItem = (picker: Umbraco.Picker, $event: any) => {
+            $scope.removeItem = (picker: Immulus.IUrlPicker, $event: any) => {
                 const index = $scope.pickers.indexOf(picker);
                 if (confirm("Are you sure you want to remove this item?")) {
                     $scope.pickers.splice(index, 1);
-                    $scope.sync();
                     $scope.setDirty();
                 }
 
@@ -331,15 +360,14 @@ module UrlPicker.Controllers {
             // sort config
             $scope.sortableOptions = {
                 axis: "y",
-                cursor: "move",
-                // cursorAt: { top: height / 2, left: width / 2 },
-                handle: ".handle",
                 cancel: ".no-drag",
                 // containment: "parent", // it seems to be an issue to use containment, when sortable items not have same height
-                tolerance: "intersect", // 'pointer'
+                cursor: "move",
+                // cursorAt: { top: height / 2, left: width / 2 },
+                forcePlaceholderSize: true,
+                handle: ".handle",
                 items: "> li:not(.unsortable)",
                 placeholder: "sortable-placeholder",
-                forcePlaceholderSize: true,
                 start: (ev: any, ui: any) => {
                     // var panelHeight = $(ui.item).find(".panel").height();
 
@@ -350,17 +378,18 @@ module UrlPicker.Controllers {
 
                     $(ui.helper.item)
                         .draggable("option",
-                            "cursorAt",
-                            {
-                                left: Math.floor(width / 2),
-                                top: Math.floor(height / 2)
-                            });
-                },
-                update: () => {
-                    $scope.setDirty();
+                        "cursorAt",
+                        {
+                            left: Math.floor(width / 2),
+                            top: Math.floor(height / 2)
+                        });
                 },
                 stop: () => {
                     return;
+                },
+                tolerance: "intersect", // 'pointer'
+                update: () => {
+                    $scope.setDirty();
                 }
             };
 
@@ -370,7 +399,7 @@ module UrlPicker.Controllers {
             }
 
             // helper to get initial model if none was provided
-            function getDefaultModel(config: any) {
+            function getDefaultModel(config: Immulus.IPickerConfig) {
                 if (config.startWithAddButton) {
                     return [];
                 }
@@ -379,7 +408,8 @@ module UrlPicker.Controllers {
                         "type": config.defaultType,
                         "meta": { "title": "", "newWindow": false },
                         "typeData": { "url": "", "contentId": null, "mediaId": null },
-                        "disabled": false
+                        "disabled": false,
+                        "active": true, "error": ""
                     }
                 ]; // [getEmptyRenderFieldset(config.fieldsets[0])] };
             }
@@ -420,7 +450,7 @@ module UrlPicker.Controllers {
 
             // setup "render model" & defaults
             function init() {
-                var defaultType: string;
+                let defaultType: string;
                 // content start node
                 if (!$scope.model.config.contentStartNode) {
                     $scope.model.config.contentStartNode = -1;
@@ -431,7 +461,7 @@ module UrlPicker.Controllers {
                 }
 
                 // multiple items
-                if (!$scope.model.config.multipleItems || $scope.model.config.multipleItems === 0) {
+                if (!$scope.model.config.multipleItems) {
                     $scope.model.config.multipleItems = false;
                 } else {
                     $scope.model.config.multipleItems = true;
@@ -445,28 +475,28 @@ module UrlPicker.Controllers {
                 }
 
                 // start with add-button
-                if (!$scope.model.config.startWithAddButton || $scope.model.config.startWithAddButton === 0) {
+                if (!$scope.model.config.startWithAddButton) {
                     $scope.model.config.startWithAddButton = false;
                 } else {
                     $scope.model.config.startWithAddButton = true;
                 }
 
                 // enable/disable pickers
-                if (!$scope.model.config.enableDisabling || $scope.model.config.enableDisabling === 0) {
+                if (!$scope.model.config.enableDisabling) {
                     $scope.model.config.enableDisabling = false;
                 } else {
                     $scope.model.config.enableDisabling = true;
                 }
 
                 // one picker open at a time
-                if (!$scope.model.config.oneAtATime || $scope.model.config.oneAtATime === 0) {
+                if (!$scope.model.config.oneAtATime) {
                     $scope.model.config.oneAtATime = false;
                 } else {
                     $scope.model.config.oneAtATime = true;
                 }
 
                 // use picker icons
-                if (!$scope.model.config.usePickerIcons || $scope.model.config.usePickerIcons === 0) {
+                if (!$scope.model.config.usePickerIcons) {
                     $scope.model.config.usePickerIcons = false;
                 } else {
                     $scope.model.config.usePickerIcons = true;
@@ -484,14 +514,14 @@ module UrlPicker.Controllers {
                 }
 
                 // allow only to select media images
-                if (!$scope.model.config.mediaImagesOnly || $scope.model.config.mediaImagesOnly === 0) {
+                if (!$scope.model.config.mediaImagesOnly) {
                     $scope.model.config.mediaImagesOnly = false;
                 } else {
                     $scope.model.config.mediaImagesOnly = true;
                 }
 
                 // use media preview
-                if (!$scope.model.config.mediaPreview || $scope.model.config.mediaPreview === 0) {
+                if (!$scope.model.config.mediaPreview) {
                     $scope.model.config.mediaPreview = false;
                 } else {
                     $scope.model.config.mediaPreview = true;
@@ -506,55 +536,59 @@ module UrlPicker.Controllers {
 
                 // init media and content name and icon from typeData id's
                 angular.forEach($scope.pickers,
-                (obj: any) => {
-                    var contentId: number;
-                    var mediaId: number;
+                    (picker: Immulus.IUrlPicker) => {
+                        let contentId: number;
+                        let mediaId: number;
 
-                    if (obj.typeData) {
-                        if (obj.typeData.contentId) {
-                            contentId = obj.typeData.contentId;
-                        };
-                        if (obj.typeData.mediaId) {
-                            mediaId = obj.typeData.mediaId;
-                        };
-                    }
+                        if (picker.typeData) {
+                            if (picker.typeData.contentId) {
+                                contentId = picker.typeData.contentId;
+                            };
+                            if (picker.typeData.mediaId) {
+                                mediaId = picker.typeData.mediaId;
+                            };
+                        }
 
-                    if (contentId) {
-                        entityResource.getById(contentId, "Document")
-                            .then((content: any) => {
-                                // only show non-trashed items
-                                if (content.data.parentId >= -1) {
-                                    obj.content = {
-                                        "name": content.data.name,
-                                        "icon": getSafeIcon(content.data.icon)
-                                    };
-                                }
-                            });
-                    }
-
-                    if (mediaId) {
-                        entityResource.getById(mediaId, "Media")
-                            .then((media: any) => {
-                                // only show non-trashed items
-                                if (media.data.parentId >= -1) {
-
-                                    if (!media.data.thumbnail) {
-                                        media.data.thumbnail = mediaHelper.resolveFileFromEntity(media, true);
+                        if (contentId) {
+                            entityResource.getById(contentId, "Document")
+                                .then((content: any) => {
+                                    // only show non-trashed items
+                                    if (content.parentId >= -1) {
+                                        picker.content = {
+                                            "name": content.name,
+                                            "icon": getSafeIcon(content.icon)
+                                        };
                                     }
+                                },
+                                (error: any) => {
+                                    console.log(error.errorMsg);
+                                    picker.error = error.errorMsg;
+                                });
+                        }
+                        if (mediaId) {
+                            entityResource.getById(mediaId, "Media")
+                                .then((media: any) => {
+                                    // only show non-trashed items
+                                    if (media.parentId >= -1) {
 
-                                    obj.media = {
-                                        "name": media.data.name,
-                                        "thumbnail": media.data.thumbnail,
-                                        "icon": getSafeIcon(media.data.icon)
-                                    };
-                                }
-                            });
-                        // todo: handle scenario where selected media has been deleted
-                    }
-                });
+                                        if (!media.thumbnail) {
+                                            media.thumbnail = mediaHelper.resolveFileFromEntity(media, true);
+                                        }
 
+                                        picker.media = {
+                                            "name": media.name,
+                                            "thumbnail": media.thumbnail,
+                                            "icon": getSafeIcon(media.icon)
+                                        };
+                                    }
+                                },
+                                (error: any) => {
+                                    console.log(error.errorMsg);
+                                    picker.error = error.errorMsg;
+                                });
+                        };
+                    });
             }
-
             $scope.sync = () => {
                 const array = $scope.pickers ? angular.copy($scope.pickers) : [];
                 array.forEach((v: any) => {
@@ -562,6 +596,7 @@ module UrlPicker.Controllers {
                     // delete v.disabled;
                     delete v.media;
                     delete v.content;
+                    delete v.error;
                 });
 
                 $scope.model.value = angular.toJson(array, true);
